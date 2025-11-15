@@ -14,7 +14,10 @@ function App() {
         genre: '',
         platform: 'Multiplatform'
     });
+    // Nuevo estado para controlar la visibilidad del formulario de añadir
+    const [showAddForm, setShowAddForm] = useState(false);
 
+    // Función para obtener todos los juegos de la API
     const fetchGames = async () => {
         try {
             setLoading(true);
@@ -34,15 +37,18 @@ function App() {
         }
     };
 
+    // useEffect para cargar los juegos al montar el componente
     useEffect(() => {
         fetchGames();
     }, []);
 
+    // Maneja los cambios en los inputs del formulario de nuevo juego
     const handleNewGameChange = (e) => {
         const { name, value } = e.target;
         setNewGame(prevGame => ({ ...prevGame, [name]: value }));
     };
 
+    // Maneja el envío del formulario para añadir un nuevo juego
     const handleAddGame = async (e) => {
         e.preventDefault();
         try {
@@ -57,64 +63,81 @@ function App() {
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
             const addedGame = await response.json();
-            setGames(prevGames => [...prevGames, addedGame]);
-            setNewGame({
+            setGames(prevGames => [...prevGames, addedGame]); // Añade el nuevo juego a la lista
+            setNewGame({ // Resetea el formulario
                 title: '',
                 developer: '',
                 releaseYear: '',
                 genre: '',
                 platform: 'Multiplatform'
             });
+            setShowAddForm(false); // Oculta el formulario después de añadir
         } catch (err) {
             console.error("Error adding new game:", err);
             setError(`Error adding game: ${err.message}`);
         }
     };
 
+    // Muestra un mensaje de carga mientras se obtienen los juegos
     if (loading) {
         return <div className="app-container">Loading games...</div>;
     }
 
+    // Renderiza la aplicación principal
     return (
         <div className="app-container">
             <h1>GameTracker</h1>
             <p>Your personal video game collection.</p>
 
-            <section className="add-game-section">
-                <h2>Add New Game</h2>
-                {error && <p className="error-message">{error}</p>}
-                <form onSubmit={handleAddGame} className="game-form">
-                    <div className="form-group">
-                        <label htmlFor="title">Title:</label>
-                        <input type="text" id="title" name="title" value={newGame.title} onChange={handleNewGameChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="developer">Developer:</label>
-                        <input type="text" id="developer" name="developer" value={newGame.developer} onChange={handleNewGameChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="releaseYear">Release Year:</label>
-                        <input type="number" id="releaseYear" name="releaseYear" value={newGame.releaseYear} onChange={handleNewGameChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="genre">Genre:</label>
-                        <input type="text" id="genre" name="genre" value={newGame.genre} onChange={handleNewGameChange} required />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="platform">Platform:</label>
-                        <select id="platform" name="platform" value={newGame.platform} onChange={handleNewGameChange} required>
-                            <option value="Multiplatform">Multiplatform</option>
-                            <option value="PC">PC</option>
-                            <option value="PlayStation">PlayStation</option>
-                            <option value="Xbox">Xbox</option>
-                            <option value="Nintendo Switch">Nintendo Switch</option>
-                            <option value="Mobile">Mobile</option>
-                        </select>
-                    </div>
-                    <button type="submit" className="submit-btn">Add Game</button>
-                </form>
+            {/* Sección del botón para mostrar/ocultar el formulario */}
+            <section className="add-game-toggle-section">
+                <button
+                    className="toggle-add-form-btn"
+                    onClick={() => setShowAddForm(!showAddForm)} // Alterna el estado de visibilidad
+                >
+                    {showAddForm ? 'Hide Form' : 'Add New Game'}
+                </button>
             </section>
 
+            {/* Renderizado condicional del formulario de añadir juego */}
+            {showAddForm && (
+                <section className="add-game-section">
+                    <h2>Add New Game</h2>
+                    {error && <p className="error-message">{error}</p>}
+                    <form onSubmit={handleAddGame} className="game-form">
+                        <div className="form-group">
+                            <label htmlFor="title">Title:</label>
+                            <input type="text" id="title" name="title" value={newGame.title} onChange={handleNewGameChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="developer">Developer:</label>
+                            <input type="text" id="developer" name="developer" value={newGame.developer} onChange={handleNewGameChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="releaseYear">Release Year:</label>
+                            <input type="number" id="releaseYear" name="releaseYear" value={newGame.releaseYear} onChange={handleNewGameChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="genre">Genre:</label>
+                            <input type="text" id="genre" name="genre" value={newGame.genre} onChange={handleNewGameChange} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="platform">Platform:</label>
+                            <select id="platform" name="platform" value={newGame.platform} onChange={handleNewGameChange} required>
+                                <option value="Multiplatform">Multiplatform</option>
+                                <option value="PC">PC</option>
+                                <option value="PlayStation">PlayStation</option>
+                                <option value="Xbox">Xbox</option>
+                                <option value="Nintendo Switch">Nintendo Switch</option>
+                                <option value="Mobile">Mobile</option>
+                            </select>
+                        </div>
+                        <button type="submit" className="submit-btn">Add Game</button>
+                    </form>
+                </section>
+            )}
+
+            {/* Sección de la lista de juegos */}
             <h2>Game List ({games.length})</h2>
             <div className="game-list">
                 {games.length === 0 ? (

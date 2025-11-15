@@ -6,9 +6,15 @@ body {
     padding: 0;
     display: flex;
     justify-content: center;
+    align-items: center;
     min-height: 100vh;
+    box-sizing: border-box;
 }
-
+#root{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .app-container {
     padding: 20px;
     max-width: 900px;
@@ -17,6 +23,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     margin: 20px 0;
+    box-sizing: border-box;
 }
 
 h1, h2 {
@@ -97,6 +104,9 @@ p {
 /* src/App.css */
 
 .add-game-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     background-color: #444b56;
     border-radius: 8px;
     padding: 20px;
@@ -167,4 +177,25 @@ p {
     border-radius: 5px;
     margin-bottom: 15px;
     border: 1px solid #d32f2f;
+}
+.add-game-toggle-section {
+    display: flex;
+    justify-content: flex-end; /* Alinea el contenido (botón) a la derecha */
+    margin-bottom: 20px; /* Espacio debajo del botón */
+}
+
+.toggle-add-form-btn {
+    background-color: #28a745; /* Un verde amigable */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.toggle-add-form-btn:hover {
+    background-color: #218838;
 }
