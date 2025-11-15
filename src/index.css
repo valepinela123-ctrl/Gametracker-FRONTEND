@@ -1,0 +1,16 @@
+/* GAMETRACKER/FRONTEND/src/index.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4; /* Un gris claro para el fondo de toda la página */
+  color: #333;
+  min-height: 100vh; /* Asegura que el body ocupe al menos toda la altura de la pantalla */
+  display: flex; /* Para centrar el contenido de React */
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+}
+
+#root {
+  width: 100%; /* El contenedor principal de React ocupa todo el ancho disponible */
+}
