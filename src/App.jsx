@@ -1,96 +1,142 @@
-// GAMETRACKER/FRONTEND/src/App.jsx
-import { useState } from 'react'; // Necesitamos useState para cambiar lo que se muestra
-import GameList from './GameList'; // Tu componente GameList
-// Si quieres reusar el código de reseñas de App.jsx, podrías convertirlo en un componente ReviewList
-// Por ahora, para simplificar, usaremos un componente placeholder o el contenido de reseñas de antes
-// Pero para que no falle, voy a poner el código de reseñas directamente aquí y luego lo refactorizamos si quieres.
+import React, { useState, useEffect } from 'react';
+import './App.css';
 
-import './App.css'; // Estilos generales del App
+const API_BASE_URL = 'http://localhost:5000/api';
 
-// Componente temporal para mostrar reseñas, para que App.jsx no se haga tan grande si lo ponemos aquí
-// Podrías poner esto en un archivo ReviewsForGame.jsx después
-function ReviewsForGame({ gameId }) {
-    const [reviews, setReviews] = useState([]);
+function App() {
+    const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [newGame, setNewGame] = useState({
+        title: '',
+        developer: '',
+        releaseYear: '',
+        genre: '',
+        platform: 'Multiplatform'
+    });
 
-    const API_BASE_URL = 'http://localhost:5173/api';
+    const fetchGames = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await fetch(`${API_BASE_URL}/games`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            setGames(data);
+        } catch (err) {
+            console.error("Error fetching games:", err);
+            setError(`Failed to load games: ${err.message}. Ensure backend is running.`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                if (!gameId || gameId.length !== 24) {
-                    throw new Error("ID de juego inválido para las reseñas.");
-                }
-                const response = await fetch(`${API_BASE_URL}/reviews/game/${gameId}`);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `Error HTTP: ${response.status}`);
-                }
-                const data = await response.json();
-                setReviews(data);
-            } catch (err) {
-                console.error("Error al obtener las reseñas:", err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
+        fetchGames();
+    }, []);
+
+    const handleNewGameChange = (e) => {
+        const { name, value } = e.target;
+        setNewGame(prevGame => ({ ...prevGame, [name]: value }));
+    };
+
+    const handleAddGame = async (e) => {
+        e.preventDefault();
+        try {
+            setError(null);
+            const response = await fetch(`${API_BASE_URL}/games`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newGame),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
-        };
-        fetchReviews();
-    }, [gameId]); // El useEffect se ejecuta si gameId cambia
+            const addedGame = await response.json();
+            setGames(prevGames => [...prevGames, addedGame]);
+            setNewGame({
+                title: '',
+                developer: '',
+                releaseYear: '',
+                genre: '',
+                platform: 'Multiplatform'
+            });
+        } catch (err) {
+            console.error("Error adding new game:", err);
+            setError(`Error adding game: ${err.message}`);
+        }
+    };
 
-    if (loading) return <p>Cargando reseñas...</p>;
-    if (error) return <p style={{ color: 'red' }}>Error al cargar reseñas: {error}</p>;
-
-    return (
-        <div>
-            <h3>Reseñas para el Juego (ID: {gameId})</h3>
-            {reviews.length === 0 ? (
-                <p>No hay reseñas para este juego.</p>
-            ) : (
-                <ul>
-                    {reviews.map(review => (
-                        <li key={review._id}>
-                            <h4>{review.game ? review.game.title : 'Juego Desconocido'} <span style={{ float: 'right', color: '#ffc107' }}>{'⭐'.repeat(review.rating)}</span></h4>
-                            <p>Usuario: {review.user ? review.user.username : 'Anónimo'}</p>
-                            <p>{review.text}</p>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
-}
-
-// El componente principal App
-function App() {
-    // 'view' nos dirá qué componente mostrar: 'games' o 'reviews'
-    const [currentView, setCurrentView] = useState('games'); // Empieza mostrando los juegos
-
-    const TEST_GAME_ID_FOR_REVIEWS = '65231c503525e982181283d7'; // <-- CAMBIA ESTE ID por uno REAL
+    if (loading) {
+        return <div className="app-container">Loading games...</div>;
+    }
 
     return (
-        <div className="container">
-            <h1>Mi Game Tracker con React</h1>
+        <div className="app-container">
+            <h1>GameTracker</h1>
+            <p>Your personal video game collection.</p>
 
-            {/* Botones de navegación simples */}
-            <nav style={{ marginBottom: '20px' }}>
-                <button onClick={() => setCurrentView('games')} style={{ marginRight: '10px', padding: '10px 20px', cursor: 'pointer' }}>
-                    Ver Juegos
-                </button>
-                <button onClick={() => setCurrentView('reviews')} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-                    Ver Reseñas de un Juego
-                </button>
-            </nav>
+            <section className="add-game-section">
+                <h2>Add New Game</h2>
+                {error && <p className="error-message">{error}</p>}
+                <form onSubmit={handleAddGame} className="game-form">
+                    <div className="form-group">
+                        <label htmlFor="title">Title:</label>
+                        <input type="text" id="title" name="title" value={newGame.title} onChange={handleNewGameChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="developer">Developer:</label>
+                        <input type="text" id="developer" name="developer" value={newGame.developer} onChange={handleNewGameChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="releaseYear">Release Year:</label>
+                        <input type="number" id="releaseYear" name="releaseYear" value={newGame.releaseYear} onChange={handleNewGameChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="genre">Genre:</label>
+                        <input type="text" id="genre" name="genre" value={newGame.genre} onChange={handleNewGameChange} required />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="platform">Platform:</label>
+                        <select id="platform" name="platform" value={newGame.platform} onChange={handleNewGameChange} required>
+                            <option value="Multiplatform">Multiplatform</option>
+                            <option value="PC">PC</option>
+                            <option value="PlayStation">PlayStation</option>
+                            <option value="Xbox">Xbox</option>
+                            <option value="Nintendo Switch">Nintendo Switch</option>
+                            <option value="Mobile">Mobile</option>
+                        </select>
+                    </div>
+                    <button type="submit" className="submit-btn">Add Game</button>
+                </form>
+            </section>
 
-            {/* Mostramos un componente u otro según el estado 'currentView' */}
-            {currentView === 'games' && <GameList />}
-            {currentView === 'reviews' && (
-                <ReviewsForGame gameId={TEST_GAME_ID_FOR_REVIEWS} />
-            )}
+            <h2>Game List ({games.length})</h2>
+            <div className="game-list">
+                {games.length === 0 ? (
+                    <p>No games in your collection. Start adding some!</p>
+                ) : (
+                    games.map((game) => (
+                        <div key={game._id} className="game-card">
+                            <h3>{game.title}</h3>
+                            <p><strong>Developer:</strong> {game.developer}</p>
+                            <p><strong>Release Year:</strong> {game.releaseYear}</p>
+                            <p><strong>Genre:</strong> {game.genre}</p>
+                            <p><strong>Platform:</strong> {game.platform}</p>
+                            <div className="game-actions">
+                                <button className="edit-btn">Edit</button>
+                                <button className="delete-btn">Delete</button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }
 
 export default App;
-
